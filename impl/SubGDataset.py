@@ -1,23 +1,23 @@
-from torch_geometric.data import Data
 import torch
 from torch.utils.data import DataLoader
 
 
 class GDataset:
-    '''
+    """
     A class to contain splitted data.
     Args:
         x : node feature
         pos : the node set of target subgraphs. 
             For example, [[0, 1, 2], [6, 7, -1]] means two subgraphs containing nodes 0, 1, 2 and 6, 7 respectively.
         y : the target of subgraphs.
-    '''
+    """
+
     def __init__(self, x, edge_index, edge_attr, pos, y):
-        self.x=x
-        self.edge_index=edge_index
-        self.edge_attr=edge_attr
-        self.y=y
-        self.pos=pos
+        self.x = x
+        self.edge_index = edge_index
+        self.edge_attr = edge_attr
+        self.y = y
+        self.pos = pos
         self.num_nodes = x.shape[0]
 
     def __len__(self):
@@ -36,9 +36,10 @@ class GDataset:
 
 
 class GDataloader(DataLoader):
-    '''
+    """
     Dataloader for GDataset
-    '''
+    """
+
     def __init__(self, Gdataset, batch_size=64, shuffle=True, drop_last=False):
         super(GDataloader,
               self).__init__(torch.arange(len(Gdataset)).to(Gdataset.x.device),
@@ -73,11 +74,12 @@ class GDataloader(DataLoader):
 
 
 class ZGDataloader(GDataloader):
-    '''
+    """
     Dataloader for GDataset. 
     Args:
         z_fn: assigning node label for each batch.
-    '''
+    """
+
     def __init__(self,
                  Gdataset,
                  batch_size=64,

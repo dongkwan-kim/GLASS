@@ -2,17 +2,22 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
-from torch_geometric.nn.norm import GraphNorm, GraphSizeNorm
 from torch_geometric.nn.glob.glob import global_mean_pool, global_add_pool, global_max_pool
-from .utils import pad2batch
+from torch_geometric.nn.norm import GraphNorm, GraphSizeNorm
+
+try:
+    from .utils import pad2batch
+except:
+    from impl.utils import pad2batch
 
 
 class Seq(nn.Module):
-    ''' 
+    """ 
     An extension of nn.Sequential. 
     Args: 
         modlist an iterable of modules to add.
-    '''
+    """
+
     def __init__(self, modlist):
         super().__init__()
         self.modlist = nn.ModuleList(modlist)
@@ -25,13 +30,14 @@ class Seq(nn.Module):
 
 
 class MLP(nn.Module):
-    '''
+    """
     Multi-Layer Perception.
     Args:
         tail_activation: whether to use activation function at the last layer.
         activation: activation function.
         gn: whether to use GraphNorm layer.
-    '''
+    """
+
     def __init__(self,
                  input_channels: int,
                  hidden_channels: int,
@@ -81,16 +87,16 @@ class MLP(nn.Module):
 
 
 def buildAdj(edge_index, edge_weight, n_node: int, aggr: str):
-    '''
+    """
         Calculating the normalized adjacency matrix.
         Args:
             n_node: number of nodes in graph.
             aggr: the aggregation method, can be "mean", "sum" or "gcn".
-        '''
+        """
     adj = torch.sparse_coo_tensor(edge_index,
                                   edge_weight,
                                   size=(n_node, n_node))
-    deg = torch.sparse.sum(adj, dim=(1, )).to_dense().flatten()
+    deg = torch.sparse.sum(adj, dim=(1,)).to_dense().flatten()
     deg[deg < 0.5] += 1.0
     if aggr == "mean":
         deg = 1.0 / deg
@@ -112,13 +118,14 @@ def buildAdj(edge_index, edge_weight, n_node: int, aggr: str):
 
 
 class GLASSConv(torch.nn.Module):
-    '''
+    """
     A kind of message passing layer we use for GLASS.
     We use different parameters to transform the features of node with different labels individually, and mix them.
     Args:
         aggr: the aggregation method.
         z_ratio: the ratio to mix the transformed features.
-    '''
+    """
+
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
@@ -175,14 +182,15 @@ class GLASSConv(torch.nn.Module):
 
 
 class EmbZGConv(nn.Module):
-    '''
+    """
     combination of some GLASSConv layers, normalization layers, dropout layers, and activation function.
     Args:
         max_deg: the max integer in input node features.
         conv: the message passing layer we use.
         gn: whether to use GraphNorm.
         jk: whether to use Jumping Knowledge Network.
-    '''
+    """
+
     def __init__(self,
                  hidden_channels,
                  output_channels,
@@ -273,20 +281,21 @@ class EmbZGConv(nn.Module):
 
 
 class PoolModule(nn.Module):
-    '''
+    """
     Modules used for pooling node embeddings to produce subgraph embeddings.
     Args: 
         trans_fn: module to transfer node embeddings.
         pool_fn: module to pool node embeddings like global_add_pool.
-    '''
+    """
+
     def __init__(self, pool_fn, trans_fn=None):
         super().__init__()
         self.pool_fn = pool_fn
         self.trans_fn = trans_fn
 
     def forward(self, x, batch):
-        # The j-th element in batch vector is i if node j is in the i-th subgraph.
-        # for example [0,1,0,0,1,1,2,2] means nodes 0,2,3 in subgraph 0, nodes 1,4,5 in subgraph 1, and nodes 6,7 in subgraph 2.
+        # The j-th element in batch vector is i if node j is in the i-th subgraph. for example [0,1,0,0,1,1,2,
+        # 2] means nodes 0,2,3 in subgraph 0, nodes 1,4,5 in subgraph 1, and nodes 6,7 in subgraph 2.
         if self.trans_fn is not None:
             x = self.trans_fn(x)
         return self.pool_fn(x, batch)
@@ -320,12 +329,13 @@ class SizePool(AddPool):
 
 
 class GLASS(nn.Module):
-    '''
+    """
     GLASS model: combine message passing layers and mlps and pooling layers.
     Args:
         preds and pools are ModuleList containing the same number of MLPs and Pooling layers.
         preds[id] and pools[id] is used to predict the id-th target. Can be used for SSL.
-    '''
+    """
+
     def __init__(self, conv: EmbZGConv, preds: nn.ModuleList,
                  pools: nn.ModuleList):
         super().__init__()
@@ -359,11 +369,12 @@ class GLASS(nn.Module):
 
 
 class MyGCNConv(torch.nn.Module):
-    '''
+    """
     A kind of message passing layer we use for pretrained GNNs.
     Args:
         aggr: the aggregation method.
-    '''
+    """
+
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
@@ -396,14 +407,15 @@ class MyGCNConv(torch.nn.Module):
 
 
 class EmbGConv(torch.nn.Module):
-    '''
+    """
     combination of some message passing layers, normalization layers, dropout layers, and activation function.
     Args:
         max_deg: the max integer in input node features.
         conv: the message passing layer we use.
         gn: whether to use GraphNorm.
         jk: whether to use Jumping Knowledge Network.
-    '''
+    """
+
     def __init__(self,
                  input_channels: int,
                  hidden_channels: int,
@@ -476,12 +488,13 @@ class EmbGConv(torch.nn.Module):
 
 
 class EdgeGNN(nn.Module):
-    '''
+    """
     EdgeGNN model: combine message passing layers and mlps and pooling layers to do link prediction task.
     Args:
         preds and pools are ModuleList containing the same number of MLPs and Pooling layers.
         preds[id] and pools[id] is used to predict the id-th target. Can be used for SSL.
-    '''
+    """
+
     def __init__(self, conv, preds: nn.ModuleList, pools: nn.ModuleList):
         super().__init__()
         self.conv = conv

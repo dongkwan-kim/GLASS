@@ -2,9 +2,9 @@ import torch
 
 
 def train(optimizer, model, dataloader, loss_fn):
-    '''
+    """
     Train models in an epoch.
-    '''
+    """
     model.train()
     total_loss = []
     for batch in dataloader:
@@ -19,9 +19,9 @@ def train(optimizer, model, dataloader, loss_fn):
 
 @torch.no_grad()
 def test(model, dataloader, metrics, loss_fn):
-    '''
+    """
     Test models either on validation dataset or test dataset.
-    '''
+    """
     model.eval()
     preds = []
     ys = []

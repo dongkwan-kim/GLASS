@@ -1,15 +1,17 @@
-from impl import models, SubGDataset, train, metrics, utils, config
-import datasets
-import torch
-from torch.optim import Adam, lr_scheduler
-from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 import argparse
-import torch.nn as nn
 import functools
-import numpy as np
-import time
 import random
+import time
+
+import numpy as np
+import torch
+import torch.nn as nn
 import yaml
+from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
+from torch.optim import Adam, lr_scheduler
+
+import datasets
+from impl import models, SubGDataset, train, metrics, utils, config
 
 parser = argparse.ArgumentParser(description='')
 # Dataset settings
@@ -57,6 +59,7 @@ if baseG.y.unique().shape[0] == 2:
     def loss_fn(x, y):
         return BCEWithLogitsLoss()(x.flatten(), y.flatten())
 
+
     baseG.y = baseG.y.to(torch.float)
     if baseG.y.ndim > 1:
         output_channels = baseG.y.shape[1]
@@ -75,9 +78,9 @@ tloader_fn = SubGDataset.GDataloader
 
 
 def split():
-    '''
+    """
     load and split dataset.
-    '''
+    """
     # initialize and split dataset
     global trn_dataset, val_dataset, tst_dataset
     global max_deg, output_channels, loader_fn, tloader_fn
@@ -122,7 +125,7 @@ def split():
 
 
 def buildModel(hidden_dim, conv_layer, dropout, jk, pool, z_ratio, aggr):
-    '''
+    """
     Build a GLASS model.
     Args:
         jk: whether to use Jumping Knowledge Network.
@@ -130,7 +133,7 @@ def buildModel(hidden_dim, conv_layer, dropout, jk, pool, z_ratio, aggr):
         pool: pooling function transfer node embeddings to subgraph embeddings.
         z_ratio: see GLASSConv in impl/model.py. Z_ratio in [0.5, 1].
         aggr: aggregation method. mean, sum, or gcn. 
-    '''
+    """
     conv = models.EmbZGConv(hidden_dim,
                             hidden_dim,
                             conv_layer,
@@ -151,7 +154,7 @@ def buildModel(hidden_dim, conv_layer, dropout, jk, pool, z_ratio, aggr):
                          map_location=torch.device('cpu')).detach()
         conv.input_emb = nn.Embedding.from_pretrained(emb, freeze=False)
 
-    mlp = nn.Linear(hidden_dim * (conv_layer) if jk else hidden_dim,
+    mlp = nn.Linear(hidden_dim * conv_layer if jk else hidden_dim,
                     output_channels)
 
     pool_fn_fn = {
@@ -180,13 +183,13 @@ def test(pool="size",
          z_ratio=0.8,
          batch_size=None,
          resi=0.7):
-    '''
+    """
     Test a set of hyperparameters in a task.
     Args:
         jk: whether to use Jumping Knowledge Network.
         z_ratio: see GLASSConv in impl/model.py. A hyperparameter of GLASS.
         resi: the lr reduce factor of ReduceLROnPlateau.
-    '''
+    """
     outs = []
     t1 = time.time()
     # we set batch_size = tst_dataset.y.shape[0] // num_div.
@@ -255,7 +258,7 @@ def test(pool="size",
             if early_stop > 100 / num_div:
                 break
         print(
-            f"end: epoch {i+1}, train time {sum(trn_time):.2f} s, val {val_score:.3f}, tst {tst_score:.3f}",
+            f"end: epoch {i + 1}, train time {sum(trn_time):.2f} s, val {val_score:.3f}, tst {tst_score:.3f}",
             flush=True)
         outs.append(tst_score)
     print(

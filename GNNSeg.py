@@ -1,28 +1,30 @@
-from impl import models, SubGDataset, train, metrics, config, utils
-import datasets
-import torch
-from torch.optim import Adam, lr_scheduler
-from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 import argparse
-import torch.nn as nn
-from torch_geometric.nn import GCNConv, GraphNorm, GINConv
 import functools
+
 import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
+from torch.optim import Adam, lr_scheduler
 from torch_geometric.data import InMemoryDataset, Data
 from torch_geometric.data.dataloader import DataLoader as pygDataloader
+from torch_geometric.nn import GCNConv, GraphNorm, GINConv
 from torch_geometric.utils import k_hop_subgraph
-import torch.nn.functional as F
 
+import datasets
+from impl import models, SubGDataset, train, metrics, config, utils
 
-'''
+"""
 Dataset and Dataloader class for segregated subgraph
-'''
+"""
 
 
 class GsDataset(InMemoryDataset):
-    '''
+    """
     designed for GNN-seg.
-    '''
+    """
+
     def __init__(self, datalist):
         self.datalist = datalist
         super(GsDataset, self).__init__()
@@ -39,9 +41,10 @@ class GsDataset(InMemoryDataset):
 
 
 class GsDataloader(pygDataloader):
-    '''
+    """
     dataloader for GsDataset
-    '''
+    """
+
     def __init__(self, Gsdataset, batch_size=64, shuffle=True, drop_last=True):
         super(GsDataloader, self).__init__(Gsdataset,
                                            batch_size=batch_size,
@@ -62,9 +65,9 @@ class GsDataloader(pygDataloader):
         return x, ei, ea, pos, y
 
 
-'''
+"""
 Models for segregated subgraph
-'''
+"""
 
 
 class GConv(torch.nn.Module):
@@ -135,7 +138,7 @@ class GNN(torch.nn.Module):
             coord_2 = torch.arange(pos.shape[0]).reshape(
                 -1,
                 1)[:,
-                   torch.zeros(pos.shape[1], dtype=torch.int64)].to(pos.device)
+                      torch.zeros(pos.shape[1], dtype=torch.int64)].to(pos.device)
             coord = torch.stack([coord_2.flatten(), pos.flatten()])
             coord = coord[:, coord[1] >= 0]
             vec_pos = torch.sparse_coo_tensor(coord,
@@ -193,6 +196,7 @@ if baseG.y.unique().shape[0] == 2:
 
     def loss_fn(x, y):
         return BCEWithLogitsLoss()(x.flatten(), y.flatten())
+
 
     baseG.y = baseG.y.to(torch.float)
     if baseG.y.ndim > 1:
@@ -286,7 +290,8 @@ def test(hidden_dim=64, conv_layer=8, dropout=0.3, lr=1e-3, batch_size=160):
         np.random.seed(seed)
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)  
+        torch.cuda.manual_seed_all(seed)
+
     trn_loader = loader_fn(trn_dataset, batch_size)
     val_loader = tloader_fn(val_dataset, batch_size)
     tst_loader = tloader_fn(tst_dataset, batch_size)

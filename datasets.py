@@ -1,24 +1,23 @@
-import numpy as np
-from torch.nn.utils.rnn import pad_sequence
-from torch.nn.functional import one_hot
-import torch
-from torch_geometric.utils import is_undirected, to_undirected, negative_sampling, to_networkx
-from torch_geometric.data import Data
-import networkx as nx
 import os
+
+import networkx as nx
+import numpy as np
+import torch
+from torch.nn.functional import one_hot
+from torch.nn.utils.rnn import pad_sequence
+from torch_geometric.data import Data
+from torch_geometric.utils import is_undirected, to_undirected, negative_sampling
 
 
 class BaseGraph(Data):
     def __init__(self, x, edge_index, edge_weight, subG_node, subG_label,
                  mask):
-        '''
-        A general format for datasets.
-        Args:
-            x: node feature. For our used datasets, x is empty vector.
-            subG_node: a matrix like [[0,2,3],[1,4,5],[6,7,-1]], whose i-th row contains the nodes in the i-th subgraph. -1 is for padding.
-            subG_label: the target of subgraphs.
-            mask: of shape (number of subgraphs), type torch.long. mask[i]=0,1,2 if i-th subgraph is in the training set, validation set and test set respectively. 
-        '''
+        """
+        A general format for datasets. Args: x: node feature. For our used datasets, x is empty vector. subG_node: a
+        matrix like [[0,2,3],[1,4,5],[6,7,-1]], whose i-th row contains the nodes in the i-th subgraph. -1 is for
+        padding. subG_label: the target of subgraphs. mask: of shape (number of subgraphs), type torch.long. mask[
+        i]=0,1,2 if i-th subgraph is in the training set, validation set and test set respectively.
+        """
         super(BaseGraph, self).__init__(x=x,
                                         edge_index=edge_index,
                                         edge_attr=edge_weight,
@@ -34,8 +33,8 @@ class BaseGraph(Data):
         degree = torch.sparse.sum(adj, dim=1).to_dense().to(torch.int64)
         self.x = torch.cat((self.x, one_hot(degree).to(torch.float).reshape(
             self.x.shape[0], 1, -1)),
-            dim=-1)
-    
+                           dim=-1)
+
     def addOneFeature(self):
         # For GNN-seg only, use one as node features.
         self.x = torch.cat(
@@ -114,7 +113,7 @@ def load_dataset(name: str):
                                 batch_first=True,
                                 padding_value=-1)
         subGLabel = torch.tensor([ord(i) - ord('A') for i in obj["subGLabel"]])
-        #mask = torch.tensor(obj['mask'])
+        # mask = torch.tensor(obj['mask'])
         cnt = subG_pad.shape[0]
         mask = torch.cat(
             (torch.zeros(cnt - cnt // 2, dtype=torch.int64),
@@ -123,7 +122,7 @@ def load_dataset(name: str):
         mask = mask[torch.randperm(mask.shape[0])]
         return BaseGraph(torch.empty(
             (len(node), 1, 0)), torch.from_numpy(edge),
-                         torch.ones(edge.shape[1]), subG_pad, subGLabel, mask)
+            torch.ones(edge.shape[1]), subG_pad, subGLabel, mask)
     elif name in ["ppi_bp", "hpo_metab", "hpo_neuro", "em_user"]:
         multilabel = False
 

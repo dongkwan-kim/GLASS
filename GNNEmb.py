@@ -1,13 +1,15 @@
-from impl import models, SubGDataset, train, metrics, config
-import datasets
-import torch
-from torch.optim import Adam, lr_scheduler
-import optuna
-from torch.nn import BCEWithLogitsLoss
 import argparse
-import torch.nn as nn
 import functools
+
 import numpy as np
+import optuna
+import torch
+import torch.nn as nn
+from torch.nn import BCEWithLogitsLoss
+from torch.optim import Adam, lr_scheduler
+
+import datasets
+from impl import models, SubGDataset, train, metrics, config
 
 parser = argparse.ArgumentParser(description='')
 # Dataset settings
@@ -40,9 +42,9 @@ max_deg, max_z, output_channels = 0, 1, 1
 
 
 def split():
-    '''
+    """
     load and split dataset.
-    '''
+    """
     global trn_dataset, val_dataset
     global max_deg, max_z, output_channels, loader_fn, tloader_fn
     if args.use_deg:
@@ -74,12 +76,12 @@ split()
 
 
 def buildModel(hidden_dim, conv_layer, dropout, jk):
-    '''
+    """
     Build a EdgeGNN model.
     Args:
         jk: whether to use Jumping Knowledge Network.
         conv_layer: number of GLASSConv.
-    '''
+    """
     tmp2 = hidden_dim * (conv_layer) if jk else hidden_dim
     conv = models.EmbGConv(hidden_dim,
                            hidden_dim,
@@ -106,9 +108,9 @@ def buildModel(hidden_dim, conv_layer, dropout, jk):
 
 
 def work(hidden_dim, conv_layer, dropout, jk, lr, batch_size):
-    '''
+    """
     try a set of hyperparameters for pretrained GNN.
-    '''
+    """
     trn_loader = loader_fn(trn_dataset, batch_size)
     val_loader = tloader_fn(val_dataset, val_dataset.y.shape[0])
     outs = []
@@ -167,9 +169,9 @@ best_score = 0
 
 
 def obj(trial):
-    '''
+    """
     a trial of hyperparameter optimization.
-    '''
+    """
     global trn_dataset, val_dataset, tst_dataset, args
     global input_channels, output_channels, loader_fn, tloader_fn
     global loss_fn, best_score
@@ -193,7 +195,7 @@ print(args)
 # tuning hyperparameters of pretrained GNNs.
 study = optuna.create_study(direction="maximize",
                             storage="sqlite:///" + args.path + args.name +
-                            ".db",
+                                    ".db",
                             study_name=args.name,
                             load_if_exists=True)
 study.optimize(obj, n_trials=args.optruns)
