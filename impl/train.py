@@ -7,6 +7,7 @@ def train(optimizer, model, dataloader, loss_fn):
     """
     model.train()
     total_loss = []
+    # NOTE: time calculation per batch
     for batch in dataloader:
         optimizer.zero_grad()
         pred = model(*batch[:-1], id=0)

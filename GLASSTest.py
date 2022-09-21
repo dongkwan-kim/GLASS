@@ -9,6 +9,7 @@ import torch.nn as nn
 import yaml
 from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 from torch.optim import Adam, lr_scheduler
+from tqdm import tqdm
 
 import datasets
 from impl import models, SubGDataset, train, metrics, utils, config
@@ -215,7 +216,8 @@ def test(pool="size",
         tst_score = 0
         early_stop = 0
         trn_time = []
-        for i in range(300):
+        # NOTE: time calculation per epoch
+        for i in tqdm(range(300)):
             t1 = time.time()
             loss = train.train(optimizer, gnn, trn_loader, loss_fn)
             trn_time.append(time.time() - t1)
