@@ -71,8 +71,15 @@ Then
 ```
 python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 10 --device $gpu_id --dataset $dataset
 ```
-
 where $dataset can be selected from em_user, ppi_bp, hpo_metab, and hpo_neuro.
+
+Examples:
+```
+python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 3 --dataset ppi_bp
+python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 3 --dataset hpo_neuro 
+python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 3 --dataset hpo_metab
+python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 3 --dataset em_user
+```
 
 To reproduce GNN-seg
 
