@@ -13,7 +13,8 @@ def compute_efficiency_metrics(interval_train_epochs,
                                interval_valid_epochs,
                                num_batches_valid_epochs,
                                total_epoch_count,
-                               model: nn.Module):
+                               model: nn.Module,
+                               device=None):
 
     dt_init_start = None  # not support for this function
 
@@ -37,8 +38,8 @@ def compute_efficiency_metrics(interval_train_epochs,
 
     # Memory and parameters
     num_parameters = count_parameters(model)
-    max_memory_reserved = torch.cuda.max_memory_reserved()
-    max_memory_allocated = torch.cuda.max_memory_allocated()
+    max_memory_reserved = torch.cuda.max_memory_reserved(device)
+    max_memory_allocated = torch.cuda.max_memory_allocated(device)
     cprint(f"\nSummary as Table --- {model.__class__.__name__}", "yellow")
     print("\t".join(str(t) for t in [
         num_parameters, max_memory_reserved, max_memory_allocated,

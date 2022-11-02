@@ -260,7 +260,8 @@ def test(pool="size",
                                                interval_valid_epochs,
                                                num_batches_valid_epochs,
                                                total_epoch_count,
-                                               model=gnn)
+                                               model=gnn,
+                                               device=config.device)
                     exit()
 
             if (not compute_efficiency) and i >= 100 / num_div:
