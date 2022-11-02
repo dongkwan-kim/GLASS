@@ -3,25 +3,27 @@ from tqdm import tqdm
 import time
 
 
-def train(optimizer, model, dataloader, loss_fn):
+def train(optimizer, model, dataloader, loss_fn) -> dict:
     """
     Train models in an epoch.
     """
     model.train()
     total_loss = []
-    # NOTE: time calculation per batch
-    for batch in tqdm(dataloader):
+    for batch in dataloader:
         optimizer.zero_grad()
         pred = model(*batch[:-1], id=0)
         loss = loss_fn(pred, batch[-1])
         loss.backward()
         total_loss.append(loss.detach().item())
         optimizer.step()
-    return sum(total_loss) / len(total_loss)
+    return {
+        "loss": sum(total_loss) / len(total_loss),
+        "num_batches": len(total_loss),
+    }
 
 
 @torch.no_grad()
-def test(model, dataloader, metrics, loss_fn):
+def test(model, dataloader, metrics, loss_fn, return_dict=False):
     """
     Test models either on validation dataset or test dataset.
     """
@@ -34,4 +36,12 @@ def test(model, dataloader, metrics, loss_fn):
         ys.append(batch[-1])
     pred = torch.cat(preds, dim=0)
     y = torch.cat(ys, dim=0)
-    return metrics(pred.cpu().numpy(), y.cpu().numpy()), loss_fn(pred, y)
+    if not return_dict:
+        return metrics(pred.cpu().numpy(), y.cpu().numpy()), loss_fn(pred, y)
+    else:
+        return {
+            "score": metrics(pred.cpu().numpy(), y.cpu().numpy()),
+            "loss": loss_fn(pred, y),
+            "num_batches": len(ys),
+        }
+

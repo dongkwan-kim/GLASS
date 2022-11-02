@@ -73,8 +73,8 @@ python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 10 --devic
 ```
 where $dataset can be selected from em_user, ppi_bp, hpo_metab, and hpo_neuro.
 
-Examples:
 ```
+# Examples
 python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 3 --dataset ppi_bp
 python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 3 --dataset hpo_neuro 
 python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 3 --dataset hpo_metab
@@ -85,6 +85,15 @@ To reproduce GNN-seg
 
 ```
 python GNNSeg.py --test  --repeat 10 --device $gpu_id --dataset $dataset
+```
+
+To compute efficiency (`--compute_efficiency`)
+```
+# Examples
+python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 2 --dataset ppi_bp --compute_efficiency
+python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 2 --dataset hpo_neuro --compute_efficiency
+python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 2 --dataset hpo_metab --compute_efficiency
+python GLASSTest.py --use_nodeid --use_seed --use_maxzeroone --repeat 1 --device 2 --dataset em_user --compute_efficiency
 ```
 
 #### Use Your Own Dataset

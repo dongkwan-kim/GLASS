@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 import datasets
 from impl import models, SubGDataset, train, metrics, utils, config
+from utils_efficiency import compute_efficiency_metrics
 
 parser = argparse.ArgumentParser(description='')
 # Dataset settings
@@ -29,6 +30,10 @@ parser.add_argument('--use_maxzeroone', action='store_true')
 parser.add_argument('--repeat', type=int, default=1)
 parser.add_argument('--device', type=int, default=0)
 parser.add_argument('--use_seed', action='store_true')
+
+# for efficiency
+parser.add_argument("--compute_efficiency", action="store_true")
+parser.add_argument('--stop_epochs_for_efficiency', type=int, default=50)
 
 args = parser.parse_args()
 config.set_device(args.device)
@@ -183,7 +188,9 @@ def test(pool="size",
          lr=1e-3,
          z_ratio=0.8,
          batch_size=None,
-         resi=0.7):
+         resi=0.7,
+         compute_efficiency=False,
+         stop_epochs_for_efficiency=50):
     """
     Test a set of hyperparameters in a task.
     Args:
@@ -215,15 +222,48 @@ def test(pool="size",
         val_score = 0
         tst_score = 0
         early_stop = 0
-        trn_time = []
-        # NOTE: time calculation per epoch
-        for i in tqdm(range(300)):
-            t1 = time.time()
-            loss = train.train(optimizer, gnn, trn_loader, loss_fn)
-            trn_time.append(time.time() - t1)
-            scd.step(loss)
 
-            if i >= 100 / num_div:
+        # NOTE: time calculation per epoch
+        interval_train_epochs = []
+        num_batches_train_epochs = []
+
+        interval_valid_epochs = []
+        num_batches_valid_epochs = []
+
+        total_epoch_count = 0
+
+        for i in tqdm(range(300), desc=f"{args.dataset}"):
+            total_epoch_count += 1
+            time_train_epoch_start = time.time()
+            train_outputs = train.train(optimizer, gnn, trn_loader, loss_fn)
+            loss, train_batch_count = train_outputs["loss"], train_outputs["num_batches"]
+            scd.step(loss)
+            interval_train_epochs.append(time.time() - time_train_epoch_start)
+            num_batches_train_epochs.append(train_batch_count)
+
+            # NOTE: this block will be used for compute efficiency.
+            if compute_efficiency:
+                time_valid_epoch_start = time.time()
+                val_outputs = train.test(
+                    gnn,
+                    val_loader,
+                    score_fn,
+                    loss_fn=loss_fn,
+                    return_dict=True,  # NOTE: important
+                )
+                valid_batch_count = val_outputs["num_batches"]
+                interval_valid_epochs.append(time.time() - time_valid_epoch_start)
+                num_batches_valid_epochs.append(valid_batch_count)
+                if stop_epochs_for_efficiency == total_epoch_count:
+                    compute_efficiency_metrics(interval_train_epochs,
+                                               num_batches_train_epochs,
+                                               interval_valid_epochs,
+                                               num_batches_valid_epochs,
+                                               total_epoch_count,
+                                               model=gnn)
+                    exit()
+
+            if (not compute_efficiency) and i >= 100 / num_div:
                 score, _ = train.test(gnn,
                                       val_loader,
                                       score_fn,
@@ -260,7 +300,7 @@ def test(pool="size",
             if early_stop > 100 / num_div:
                 break
         print(
-            f"end: epoch {i + 1}, train time {sum(trn_time):.2f} s, val {val_score:.3f}, tst {tst_score:.3f}",
+            f"end: epoch {i + 1}, train time {sum(interval_train_epochs):.2f} s, val {val_score:.3f}, tst {tst_score:.3f}",
             flush=True)
         outs.append(tst_score)
     print(
@@ -268,11 +308,14 @@ def test(pool="size",
     )
 
 
-print(args)
-# read configuration
-with open(f"config/{args.dataset}.yml") as f:
-    params = yaml.safe_load(f)
+if __name__ == '__main__':
+    print(args)
+    # read configuration
+    with open(f"config/{args.dataset}.yml") as f:
+        params = yaml.safe_load(f)
 
-print("params", params, flush=True)
-split()
-test(**(params))
+    print("params", params, flush=True)
+    split()
+    test(**params,
+         compute_efficiency=args.compute_efficiency,
+         stop_epochs_for_efficiency=args.stop_epochs_for_efficiency)
