@@ -127,7 +127,10 @@ def load_dataset(name: str):
             (len(node), 1, 0)), torch.from_numpy(edge),
             torch.ones(edge.shape[1]), subG_pad, subGLabel, mask)
     elif name in ["ppi_bp", "hpo_metab", "hpo_neuro", "em_user"]:
-        multilabel = False
+        if name == "hpo_neuro":
+            multilabel = True
+        else:
+            multilabel = False
 
         # copied from https://github.com/mims-harvard/SubGNN/blob/main/SubGNN/subgraph_utils.py
         def read_subgraphs(sub_f, split=True):
